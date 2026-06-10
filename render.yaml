@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: movie-ticket-booking
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: REDIS_HOST
+        fromService:
+          type: redis
+          name: movie-ticket-booking-redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: redis
+          name: movie-ticket-booking-redis
+          property: port
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_SECURE
+        value: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: EMAIL_MAX_RETRIES
+        value: 5
+      - key: EMAIL_RETRY_BACKOFF_MS
+        value: 5000
+
+  - type: redis
+    name: movie-ticket-booking-redis
+    plan: free
+    ipAllowList: []
