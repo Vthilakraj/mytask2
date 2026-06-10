@@ -26,8 +26,16 @@ async function createBooking(payload) {
 
   // Enqueue the confirmation email on a background queue so the booking
   // API response is never blocked or delayed by email delivery.
+  // A hard timeout guarantees this never holds up the response, even if
+  // the queue backend (Redis) is unreachable or slow to connect.
+  const ENQUEUE_TIMEOUT_MS = 2000;
   try {
-    await enqueueBookingConfirmationEmail(booking);
+    await Promise.race([
+      enqueueBookingConfirmationEmail(booking),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Enqueue timed out')), ENQUEUE_TIMEOUT_MS)
+      ),
+    ]);
   } catch (err) {
     // Failing to enqueue must not fail the booking itself, but it must be logged.
     logger.error('Failed to enqueue booking confirmation email', {
